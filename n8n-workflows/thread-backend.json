@@ -1,0 +1,1040 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        360
+      ],
+      "id": "2cabe518-8b5a-43c1-bf09-7db7185535c2",
+      "name": "Split Messages"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.threads }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -900,
+        360
+      ],
+      "id": "d57e6fe3-a2eb-47ee-bed8-0a4fbdae5d66",
+      "name": "Send Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34ea30e5-5515-4423-8913-dba9491cadc0",
+              "name": "recipientName",
+              "value": "={{ $json.expand.sender.firstName }} {{ $json.expand.sender.lastName }}",
+              "type": "string"
+            },
+            {
+              "id": "1deb7874-79ef-46c4-bc62-07f9f3036fa1",
+              "name": "content",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "140e2a80-617b-46d8-bbd9-0009d3934391",
+              "name": "lastUpdated",
+              "value": "={{ $json.updated }}",
+              "type": "string"
+            },
+            {
+              "id": "4b4cba2d-6853-4492-8f42-2e0c73d5ea25",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "629a9a02-49c9-4ef5-85db-75e74b3e01b0",
+              "name": "recipientLinkedInFollowerCount",
+              "value": "={{ $json.expand.sender.followers }}",
+              "type": "string"
+            },
+            {
+              "id": "bcaba44b-7daa-4281-8da5-5172523b476e",
+              "name": "linkedinProfileURL",
+              "value": "={{ $json.expand.sender.linkedinUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "8bba379b-568a-42aa-b2c1-e9547a4be4f0",
+              "name": "isFromMe",
+              "value": "={{ $json.isFromMe }}",
+              "type": "string"
+            },
+            {
+              "id": "a5992dac-bbff-4229-ac41-6a688ad19753",
+              "name": "avatar",
+              "value": "={{ $json.expand.sender.avatar }}",
+              "type": "string"
+            },
+            {
+              "id": "664e4b4a-feea-41fb-9d25-43f72a37b030",
+              "name": "messageId",
+              "value": "={{ $json.messageId }}",
+              "type": "string"
+            },
+            {
+              "id": "c6c87ed7-2f67-4ade-9e50-5814f54c731a",
+              "name": "chatId",
+              "value": "={{ $json.chatId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1320,
+        360
+      ],
+      "id": "fcd4964d-caeb-4e71-a3fb-aed6a1a8435c",
+      "name": "Format Message Data"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "threads",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -1140,
+        360
+      ],
+      "id": "38cc9233-ea4a-4031-ae35-7ccacefd2444",
+      "name": "Combine Messages"
+    },
+    {
+      "parameters": {
+        "url": "=****POCKETBASE_BASE_URL****/api/collections/inboxes/records?filter=(sender='{{ $json.query.id }}')&expand=sender&sort=-created",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.headers.authorization }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1740,
+        360
+      ],
+      "id": "765c0e15-d6da-4032-b914-6e87491d9733",
+      "name": "get users",
+      "notes": "## Fetch User Messages\nRetrieves all messages for a specific user with sender details"
+    },
+    {
+      "parameters": {
+        "content": "## Message Thread Flow\n\nFetches and formats message threads:\n- Gets messages by sender ID\n- Expands sender details\n- Sorts by creation date\n- Formats for frontend display",
+        "height": 240,
+        "width": 340,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1940,
+        40
+      ],
+      "name": "Workflow Overview",
+      "id": "c48ee63a-143e-480d-a359-9fd214fb8beb",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=****UNIPILE_DSN_URL****/api/v1/chats/{{ $json.body.chatId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.body.message }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $json.body.messageId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1600,
+        1040
+      ],
+      "id": "e2f028f0-7f36-477d-9b97-226dc3352230",
+      "name": "Send LinkedIn Message",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "sKgvi3din06BhHoi",
+          "name": "Unipile [LinkedIn API]"
+        }
+      },
+      "notes": "## Send Message to LinkedIn\nSends message via Unipile API to LinkedIn chat"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.object }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -1360,
+        1040
+      ],
+      "id": "e1e85d44-f31b-420e-938c-e645e56e26c5",
+      "name": "Send Response1"
+    },
+    {
+      "parameters": {
+        "content": "## Message Sending Flow\n\nHandles sending messages to LinkedIn:\n- Receives message content from frontend\n- Sends via Unipile API\n- Returns send status",
+        "height": 220,
+        "width": 400,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2000,
+        800
+      ],
+      "name": "Workflow Overview1",
+      "id": "5b160ed0-f70b-47ca-80e7-f1bc4c273c00",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        -1000,
+        1820
+      ],
+      "id": "d223767e-4a9a-43e0-b9bc-85bcb405f039",
+      "name": "Anthropic Chat Model",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"draftReply\": \"Failed to generate a draft (chain failed in n8n)\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -520,
+        1680
+      ],
+      "id": "8d64a075-f09a-4089-a021-70bf2342eb81",
+      "name": "Respond with error"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"draftReply\": \"{{ $json.text.replace(/\\n/g, \"\\\\n\").replace(/\"/g, '\\\\\"') }}\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -520,
+        1500
+      ],
+      "id": "855fec75-8ada-4062-b350-b30d9550ad4c",
+      "name": "Respond with draft"
+    },
+    {
+      "parameters": {
+        "inputText": "=# Message from sender\n{{ $json.body.messageToReplyTo }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "decision-to-be-made",
+              "description": "Use this category if the input LinkedIn message has a decision or an ask being made by sender to user"
+            },
+            {
+              "category": "simple-reply",
+              "description": "Use this category if there is no decision to be made."
+            }
+          ]
+        },
+        "options": {
+          "fallback": "other",
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json.\n\nThe input text to be classified is a LinkedIn message. Your task is to understand if that message is making a request of the end user that requires a decision to be made. For example, \"Can we jump on a call next week?\" has a decision to be made, since the answer could be yes or no. \"Wow I love your content\" on the other hand does not require a decision from the user.\n\nThe two categories are mutually exclusive. A message will always fall into either decision-to-be-made or simple-reply"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        -1720,
+        1580
+      ],
+      "id": "b5aef3ec-9294-4d39-b49d-23f4d25b965f",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [
+        -1780,
+        1780
+      ],
+      "id": "9fad68d3-75a0-4311-b537-13a1d56048ad",
+      "name": "Anthropic Chat Model1",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94778920-651f-468a-a0ce-83eec3637a2b",
+              "name": "prompt",
+              "value": "=You are an AI assistant tasked with drafting email replies in a specific user's voice for LinkedIn messages. Your task is to create a draft reply that sound authentic to the user's writing style.\n\nHere is the message you need to reply to:\n<message>\n{{ $json.body.messageToReplyTo }}\n</message>\n\nThe recipient's full name is:\n<recipient>\n{{ $json.body.toFullName }}\n</recipient>\n\n\n\nHere are some examples of the user's writing style:\n<user_voice_examples>\n<example1>\nHey Carlos, thanks so much for taking the time to reach out and tell me that 🙏 \n\nI’m curious, what topics are most interesting for you? Esp if you have any feedback beyond the high level “what is agent” kind of stuff since there’s plenty of this kind of content by now. Thanks!\n</example1>\n</example2>\nHey David, sorry that your message slipped through. It's been full on with my AI sprint! Thanks a lot, messages like yours are a lovely validation for the content I'm trying to put out.\n\nn8n could definitely help with that! One way to start could be setting up a template that can autotag your messages. From there you can have simpler workflows that do something with that type of email, e.g. \"If tagged with X, upload to this notion DB and send me a Slack message\".\n\nHere's an AI template that does label assignment in Gmail. Could be used as a starting point: https://n8n.io/workflows/2197-auto-label-incoming-gmail-messages-with-ai-nodes/\n\nHappy flowgramming and if you need any help we've got some lovely helpful folks on community.n8n.io who can assist :)\n</example2>\n</user_voice_examples>\n\nWhen drafting the replies:\n1. Maintain the user's writing style, tone, and voice based on the provided examples.\n2. Keep the responses concise and professional, but in the voice of the examples.\n3. Address the main points or questions in the original message.\n5. End the message with an appropriate closing that matches the user's style.\n6. If the sender message is short, try to match that in reply. For example, sender message is 1-2 sentences, aim to reply within 1-2 sentences.\n\nFormat your output as follows:\n\nRemember to tailor your language and tone to match the user's writing style as closely as possible, while maintaining professionalism and addressing the content of the original message. Always reply in English, irrespective of input message. \n\nOnly output the draft reply, nothing else.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1300,
+        1720
+      ],
+      "id": "2e5c14ee-d00d-47e9-8931-5c5010c60b61",
+      "name": "set simple prompt"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94778920-651f-468a-a0ce-83eec3637a2b",
+              "name": "prompt",
+              "value": "=# Role\n\nYou are an AI assistant tasked with drafting email replies in a specific user's voice for LinkedIn messages. Your task is to create a draft reply that sound authentic to the user's writing style.\n\n# Task\nComplete the task by following these steps in order:\n1. Analyze the message and identify the decision that needs to be made on their request. For example, if the message asks \"Can you get on a call next week?\", the possible cases for the reply are \"Yes\" or \"No\"\n2. Write a draft reply for each possible reply case you identified in step 1\n3. Output all possible reply cases\n\n# Context\n\nHere is the message you need to reply to:\n<message>\n{{ $json.body.messageToReplyTo }}\n</message>\n\nThe recipient's full name is:\n<recipient>\n{{ $json.body.toFullName }}\n</recipient>\n\nHere are some examples of the user's writing style:\n<user_voice_examples>\n<example1>\nHey Carlos, thanks so much for taking the time to reach out and tell me that 🙏 \n\nI’m curious, what topics are most interesting for you? Esp if you have any feedback beyond the high level “what is agent” kind of stuff since there’s plenty of this kind of content by now. Thanks!\n</example1>\n</example2>\nHey David, sorry that your message slipped through. It's been full on with my AI sprint! Thanks a lot, messages like yours are a lovely validation for the content I'm trying to put out.\n\nn8n could definitely help with that! One way to start could be setting up a template that can autotag your messages. From there you can have simpler workflows that do something with that type of email, e.g. \"If tagged with X, upload to this notion DB and send me a Slack message\".\n\nHere's an AI template that does label assignment in Gmail. Could be used as a starting point: https://n8n.io/workflows/2197-auto-label-incoming-gmail-messages-with-ai-nodes/\n\nHappy flowgramming and if you need any help we've got some lovely helpful folks on community.n8n.io who can assist :)\n</example2>\n</user_voice_examples>\n\n\n# Rules\n\nWhen drafting the replies:\n1. Maintain the user's writing style, tone, and voice based on the provided examples.\n2. Keep the responses concise and professional, but in the voice of the examples.\n3. Address the main points or questions in the original message.\n4. If applicable, provide a clear yes or no response, followed by a brief explanation or additional details.\n5. End the message with an appropriate closing that matches the user's style.\n\n# Output\n\nFormat your output as follows:\n- Always reply in English, irrespective of input message. \n- Only output the draft reply, nothing else.\n- Output the possible cases for the reply in the following format:\n--- YES to meeting next week ---\nReply message for \"YES\" case\n\n--- NO to meeting next week ---\nReply message for \"YES\" case",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1300,
+        1500
+      ],
+      "id": "03f1eb35-aa04-4da6-837b-59d3e5e24592",
+      "name": "set decision prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}\nReply concisely."
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -980,
+        1580
+      ],
+      "id": "2657c5d0-0069-4d38-a48c-aa461223718a",
+      "name": "Generate Draft",
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Generate Draft Flow\n",
+        "height": 80,
+        "width": 400,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2000,
+        1420
+      ],
+      "name": "Workflow Overview2",
+      "id": "feeba12c-a3dd-4486-954b-fa62e67468a0",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Text Snippets",
+        "height": 80,
+        "width": 400,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "name": "Workflow Overview3",
+      "id": "8ef76d83-9dff-4f6a-b17a-0f7980db8016",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "linkedout/snippet",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        40,
+        700
+      ],
+      "id": "7bbf7cc6-bab0-4699-92ea-6ba4f587c5c5",
+      "name": "POST snippet",
+      "webhookId": "02b4d8c3-1933-4b5d-8521-d489b248517f"
+    },
+    {
+      "parameters": {
+        "path": "linkedout/snippets/",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        40,
+        240
+      ],
+      "id": "590d35d1-ca65-4756-a2a3-d664f49ccfd6",
+      "name": "GET many snippets",
+      "webhookId": "02b4d8c3-1933-4b5d-8521-d489b248517f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "****POCKETBASE_BASE_URL****/api/collections/textSnippets/records",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.headers.authorization }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ $json.body.name }}"
+            },
+            {
+              "name": "value",
+              "value": "={{ $json.body.text }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        700
+      ],
+      "id": "9519f137-2821-4df8-81ef-1df830157c38",
+      "name": "create snippet",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response\": \"error\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        820
+      ],
+      "id": "8a9cddab-ac87-48c6-b802-c1525a531b9c",
+      "name": "Respond Error"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response\": \"success\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        620
+      ],
+      "id": "b098bdda-a7bb-4abc-b2eb-35c4dadc140a",
+      "name": "Respond Success"
+    },
+    {
+      "parameters": {
+        "url": "=****POCKETBASE_BASE_URL****/api/collections/textSnippets/records",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.headers.authorization }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        240
+      ],
+      "id": "a43f7ead-abe3-4350-8503-616e4420653b",
+      "name": "get snippet1",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response\": \"error\"\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        400
+      ],
+      "id": "f03533d7-076b-4e70-bf54-a7d1726fceea",
+      "name": "Respond Error2"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        880,
+        180
+      ],
+      "id": "617c3977-8692-4b4c-a5de-623df0962fbc",
+      "name": "Split Out",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5e26445c-8d7c-4d4e-99aa-a2620e72de0f",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "3575f4ce-41db-4d2a-aa51-46823492a866",
+              "name": "value",
+              "value": "={{ $json.value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1080,
+        180
+      ],
+      "id": "a5c74ec1-6eef-4394-be52-625cfad5ff08",
+      "name": "format"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "textSnippets",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        180
+      ],
+      "id": "81309e74-f47c-4f35-a03c-4e3beb58b5fd",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "05175ef0-3c88-4b0e-a932-3b16a8d7e32b",
+              "leftValue": "={{ $json.items }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        140
+      ],
+      "id": "f005e8d5-2974-4eaa-838f-b24b0bd68a82",
+      "name": "Empty?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"textSnippets\": []\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        -20
+      ],
+      "id": "e2607635-aba8-4931-ac90-fe6f3ea7eb2e",
+      "name": "Respond with no snippets"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"textSnippets\": {{ $json.textSnippets.toJsonString() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        180
+      ],
+      "id": "e97fcdc6-cb51-4c79-ac78-e866000a14de",
+      "name": "Respond with snippets"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "linkedout/generate-draft",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1960,
+        1580
+      ],
+      "id": "41a4479d-e16e-4fe4-84a5-309a76de45e9",
+      "name": "Generate draft endpoint",
+      "webhookId": "cd280d92-962d-4e63-bc5e-a34377856e24"
+    },
+    {
+      "parameters": {
+        "path": "threads",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1980,
+        360
+      ],
+      "id": "cc17cfe3-8a1c-46ee-9631-d41e9b86f889",
+      "name": "/thread view",
+      "webhookId": "b9c6c08c-9036-46db-a0b5-99a75347802b"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "linkedout/message",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1900,
+        1040
+      ],
+      "id": "b936b17c-2996-4175-a5ed-336936fb0e6d",
+      "name": "Send Message Endpoint",
+      "webhookId": "a724482b-2203-4883-8fb1-fa5591741de2",
+      "notes": "## Message Send Endpoint\nReceives message send requests from frontend"
+    }
+  ],
+  "connections": {
+    "Split Messages": {
+      "main": [
+        [
+          {
+            "node": "Format Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Message Data": {
+      "main": [
+        [
+          {
+            "node": "Combine Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Messages": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get users": {
+      "main": [
+        [
+          {
+            "node": "Split Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send LinkedIn Message": {
+      "main": [
+        [
+          {
+            "node": "Send Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Draft",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "set decision prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "set simple prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "set simple prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set simple prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set decision prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Draft": {
+      "main": [
+        [
+          {
+            "node": "Respond with draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST snippet": {
+      "main": [
+        [
+          {
+            "node": "create snippet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET many snippets": {
+      "main": [
+        [
+          {
+            "node": "get snippet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create snippet": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get snippet1": {
+      "main": [
+        [
+          {
+            "node": "Empty?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "format": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Respond with snippets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empty?": {
+      "main": [
+        [
+          {
+            "node": "Respond with no snippets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate draft endpoint": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "/thread view": {
+      "main": [
+        [
+          {
+            "node": "get users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Message Endpoint": {
+      "main": [
+        [
+          {
+            "node": "Send LinkedIn Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "b0a83d90b19dda4dfc41d62bab57390aff1b490974047290004de2aaca62c9f2"
+  }
+}

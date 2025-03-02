@@ -1,0 +1,421 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -140,
+        380
+      ],
+      "id": "21d3dc85-3cb1-4743-a4c2-952bbb70b344",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "inbox",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        240,
+        380
+      ],
+      "id": "9a515796-9d14-4db9-80ad-9f0d63c33c37",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "path": "linkout_messages",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        520
+      ],
+      "id": "51a02f2e-71bc-493d-a542-a9b8d4094495",
+      "name": "Webhook",
+      "webhookId": "94415813-ffa3-4573-8a27-f9df36a75e12"
+    },
+    {
+      "parameters": {
+        "url": "=****POCKETBASE_BASE_URL****/api/collections/people/records?expand=messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.headers.authorization }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -700,
+        520
+      ],
+      "id": "bce44008-5850-4c4c-bb19-27577022c8a3",
+      "name": "get users",
+      "onError": "continueErrorOutput",
+      "notes": "## Fetch Users with Messages\nRetrieves all users and their associated messages from PocketBase.\n\n⚠️ Configuration Required:\n1. Set POCKET_BASE_URL in environment\n2. Ensure messages relation exists"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Unauthorized access",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        840
+      ],
+      "id": "7b9efe85-5fab-46dc-ada7-e67db0028e48",
+      "name": "Respond with error"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Aggregate').item.json.inbox }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        420,
+        380
+      ],
+      "id": "80b10132-1477-4d53-b0d0-80f6f88318e2",
+      "name": "Respond success"
+    },
+    {
+      "parameters": {
+        "content": "## 1. Frontend Request Handler\n[Learn more about Webhook nodes](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/)\n\nReceives requests from the frontend to fetch user messages:\n- Validates PocketBase authentication token\n- Handles error responses\n- Routes to data fetching",
+        "height": 220,
+        "width": 490,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1320,
+        240
+      ],
+      "id": "ce060966-4429-4a42-a239-732e894e8558",
+      "name": "Section 1 - Request Handler",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2. Data Processing\n[Learn more about Data Transformation](https://docs.n8n.io/data/transforming-data/)\n\nTransforms raw PocketBase data into frontend format:\n- Splits user records\n- Formats user profiles\n- Combines messages\n- Prepares response payload",
+        "height": 220,
+        "width": 490,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -680,
+        80
+      ],
+      "id": "a105c5a3-e260-4873-8b03-f944318b84a5",
+      "name": "Section 2 - Data Processing",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Response Format\n\nSuccess: JSON array of users with:\n- Author name and avatar\n- Latest message and category\n- Chat ID and timestamps\n\nError: Error message with status code",
+        "height": 220,
+        "width": 490,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        500,
+        520
+      ],
+      "name": "Response Format",
+      "id": "d5eb7f51-3e52-4833-97f3-7c9709373188",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Data Transformation\nTransforms user data for frontend display:\n\n1. User Profile:\n- Combines firstName + lastName → author\n- Formats avatar URL\n- Extracts chatId\n\n2. Messages:\n- Gets latest message content\n- Includes message category\n- Formats timestamps",
+        "height": 280,
+        "width": 400,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "name": "Data Transformation Details",
+      "id": "fd990b54-a2ce-47ef-99ed-5276c6ec9cd4",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Response Handling\n\nSuccess Response:\n- JSON array of formatted user data\n- Includes messages and profile info\n\nError Response:\n- Returns error message\n- Handles unauthorized access\n- Manages failed requests",
+        "height": 220,
+        "width": 400,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        500,
+        220
+      ],
+      "name": "Response Documentation",
+      "id": "f7a5e528-bce4-4f3b-b270-72d9ca888472",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34ea30e5-5515-4423-8913-dba9491cadc0",
+              "name": "author",
+              "value": "={{ $json.firstName }} {{ $json.lastName }}",
+              "type": "string"
+            },
+            {
+              "id": "1deb7874-79ef-46c4-bc62-07f9f3036fa1",
+              "name": "content",
+              "value": "={{ $json.expand.messages?.last().message}}",
+              "type": "string"
+            },
+            {
+              "id": "e97048f2-3a84-4e16-9925-f2e2f07c39b2",
+              "name": "category",
+              "value": "={{ $json.expand.messages[0].category }}",
+              "type": "string"
+            },
+            {
+              "id": "140e2a80-617b-46d8-bbd9-0009d3934391",
+              "name": "lastUpdated",
+              "value": "={{ $json.updated }}",
+              "type": "string"
+            },
+            {
+              "id": "4b4cba2d-6853-4492-8f42-2e0c73d5ea25",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "cb994bac-de9d-42d2-b788-94118fd85a1c",
+              "name": "avatar",
+              "value": "={{ $json.avatar }}",
+              "type": "string"
+            },
+            {
+              "id": "7954ead4-c736-42f3-bee4-a3d52f282111",
+              "name": "chatId",
+              "value": "={{ $json.expand.messages[0].chatId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        60,
+        380
+      ],
+      "id": "d64ac2de-2d94-4226-a234-c122d2d294bb",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "744b4ac7-6edb-45a4-ada4-59914a75158e",
+              "leftValue": "={{ $json.items }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        420
+      ],
+      "id": "a67b7be9-dceb-4ad0-bd63-5a5a4e452be7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"inbox\": []\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        660
+      ],
+      "id": "b7a50cf9-6b17-4678-b23f-d39bc56cfd81",
+      "name": "Respond with 'no messages'"
+    }
+  ],
+  "connections": {
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Respond success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "get users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get users": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with 'no messages'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "devrel.app.n8n.cloud",
+          "user-agent": "node",
+          "accept": "*/*",
+          "accept-encoding": "gzip, br",
+          "accept-language": "*",
+          "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0aW9uSWQiOiJwYmNfMzE0MjYzNTgyMyIsImV4cCI6MTc0MDcyOTU1OSwiaWQiOiIxZWZ2M284dTJlczg4MjIiLCJyZWZyZXNoYWJsZSI6dHJ1ZSwidHlwZSI6ImF1dGgifQ.0QiQS2_prjYhmZ70zkA1gCrUfkP_mPCkcMTH72XzWtU",
+          "cdn-loop": "cloudflare; loops=1; subreqs=1",
+          "cf-connecting-ip": "40.127.184.50",
+          "cf-ew-via": "15",
+          "cf-ipcountry": "IE",
+          "cf-ray": "9186a2878527bdf9-DUB",
+          "cf-visitor": "{\"scheme\":\"https\"}",
+          "cf-worker": "n8n.cloud",
+          "content-type": "application/json",
+          "sec-fetch-mode": "cors",
+          "x-forwarded-for": "40.127.184.50, 162.158.49.90",
+          "x-forwarded-host": "devrel.app.n8n.cloud",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "traefik-prod-users-gwc-8-86454fd949-b5x2m",
+          "x-is-trusted": "yes",
+          "x-real-ip": "40.127.184.50"
+        },
+        "params": {},
+        "query": {
+          "parameters": [
+            {
+              "name": "account_id",
+              "value": "****UNIPILE_ACCOUNT_ID****"
+            }
+          ]
+        },
+        "body": {},
+        "webhookUrl": "https://devrel.app.n8n.cloud/webhook/linkout_messages",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "instanceId": "205b3bc06c96f2dc835b4f00e1cbf9a937a74eeb3b47c99d0c30b0586dbf85aa"
+  }
+}

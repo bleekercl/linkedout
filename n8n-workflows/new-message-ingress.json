@@ -1,0 +1,1271 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "linkedout/messages",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -1800,
+          580
+        ],
+        "id": "254195db-a5ee-42d3-a974-cf590985de97",
+        "name": "Webhook",
+        "webhookId": "linkedout/messages",
+        "notes": "## LinkedIn Message Entry Point\nReceives messages from LinkedIn via Unipile webhook.\n\nExpects payload:\n```json\n{\n  event: 'message_received',\n  account_id: string,\n  message: string,\n  chat_id: string,\n  attendees: Array<{\n    attendee_profile_url: string,\n    attendee_provider_id: string\n  }>\n}\n```"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/people/records",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('signin').item.json.token }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "followers",
+                "value": "={{ $json.followers }}"
+              },
+              {
+                "name": "avatar",
+                "value": "={{ $json.avatar }}"
+              },
+              {
+                "name": "lastName",
+                "value": "={{ $json.lastName }}"
+              },
+              {
+                "name": "firstName",
+                "value": "={{ $json.firstName }}"
+              },
+              {
+                "name": "linkedinUrl",
+                "value": "={{ $('Webhook').item.json.body.attendees[0].attendee_profile_url }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          480,
+          620
+        ],
+        "id": "4e14ba6e-25c7-46b7-91e8-087a002eddc1",
+        "name": "create user",
+        "notes": "## Create PocketBase User\nCreates new user profile in PocketBase.\n\n⚠️ Configuration Required:\n1. Update URL to your PocketBase instance\n2. Verify collection name matches your PocketBase setup ('people')"
+      },
+      {
+        "parameters": {
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/people/records?filter=(linkedinUrl='{{ $('Webhook').item.json.body.attendees[0].attendee_profile_url }}')",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $json.token }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -440,
+          560
+        ],
+        "id": "423ba980-c34e-4381-bd4c-c6a7a8a048f6",
+        "name": "get user",
+        "notes": "## Get User from PocketBase\nLooks up user by LinkedIn URL in PocketBase.\n\n⚠️ Configuration Required:\n1. Update URL to your PocketBase instance\n2. Verify filter syntax matches your PocketBase setup"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "6ab40ceb-8e8a-40d6-9372-566ab4a26329",
+                "leftValue": "={{ $json.items }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "array",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -260,
+          560
+        ],
+        "id": "32d5d4ff-51bd-41f0-8709-a0ef546f3c77",
+        "name": "Check User Exists",
+        "notes": "## User Existence Check\nChecks if the user already exists in our database.\nRoutes to:\n- True: Update existing user\n- False: Create new user profile"
+      },
+      {
+        "parameters": {
+          "url": "=****UNIPILE_DSN_URL****/api/v1/users/{{ $('Webhook').item.json.body.attendees[0].attendee_provider_id }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "account_id",
+                "value": "****UNIPILE_ACCOUNT_ID****"
+              },
+              {
+                "name": "linkedin_sections",
+                "value": "*"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          80,
+          620
+        ],
+        "id": "016f73ee-f4b5-4631-bd26-589fd20e1b1f",
+        "name": "get profile by id",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "****UNIPILE_CREDENTIAL_ID****",
+            "name": "Unipile [LinkedIn API]"
+          }
+        },
+        "onError": "continueRegularOutput",
+        "notes": "## Fetch LinkedIn Profile\nRetrieves user profile data from Unipile API.\n\n⚠️ Configuration Required:\n1. Set up Unipile credentials\n2. Update account_id parameter to your LinkedIn account ID\n3. Configure httpHeaderAuth with your Unipile API key"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/inboxes/records",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('signin').item.json.token }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "chatId",
+                "value": "={{ $('Webhook').item.json.body.chat_id }}"
+              },
+              {
+                "name": "message",
+                "value": "={{ $('Webhook').item.json.body.message }}"
+              },
+              {
+                "name": "messageId",
+                "value": "={{ $('Webhook').item.json.body.message_id }}"
+              },
+              {
+                "name": "timestamp",
+                "value": "={{ $('Webhook').item.json.body.timestamp }}"
+              },
+              {
+                "name": "sender",
+                "value": "={{ $json.items[0].id }}"
+              },
+              {
+                "name": "isFromMe",
+                "value": "={{ $('isFromMe').item.json.isFromMe }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          80,
+          380
+        ],
+        "id": "e663654f-35d3-48be-bad1-ce7a6cfd67a8",
+        "name": "Store Existing User Message",
+        "notes": "## Store Message (Existing User)\nSaves message to PocketBase for existing user.\n\n⚠️ Configuration Required:\n1. Update URL to your PocketBase instance\n2. Verify 'inboxes' collection exists"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/inboxes/records",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('signin').item.json.token }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "chatId",
+                "value": "={{ $('Webhook').item.json.body.chat_id }}"
+              },
+              {
+                "name": "message",
+                "value": "={{ $('Webhook').item.json.body.message }}"
+              },
+              {
+                "name": "messageId",
+                "value": "={{ $('Webhook').item.json.body.message_id }}"
+              },
+              {
+                "name": "timestamp",
+                "value": "={{ $('Webhook').item.json.body.timestamp }}"
+              },
+              {
+                "name": "sender",
+                "value": "={{ $json.id }}"
+              },
+              {
+                "name": "isFromMe",
+                "value": "={{ $('isFromMe').item.json.isFromMe }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          680,
+          620
+        ],
+        "id": "d29b86a5-4372-40f3-8f3f-bc78f562de13",
+        "name": "Store New User Message",
+        "notes": "## Store Message (New User)\nSaves message to PocketBase for new user.\n\n⚠️ Configuration Required:\n1. Update URL to your PocketBase instance\n2. Verify 'inboxes' collection exists"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "363de654-f3fe-4025-a82f-00881fe8bcbf",
+                "name": "followers",
+                "value": "={{ $json.follower_count }}",
+                "type": "number"
+              },
+              {
+                "id": "032ad043-5558-4787-aaef-918c6ddd38b5",
+                "name": "lastName",
+                "value": "={{ $json.last_name }}",
+                "type": "string"
+              },
+              {
+                "id": "9d0b89c6-5b2f-483e-bf39-86d2ffebb963",
+                "name": "firstName",
+                "value": "={{ $json.first_name }}",
+                "type": "string"
+              },
+              {
+                "id": "551372e9-a0f2-4a24-9d46-9a3e25576701",
+                "name": "avatar",
+                "value": "={{ $json.profile_picture_url }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          280,
+          620
+        ],
+        "id": "68d16996-efac-4d23-a3d4-2319be8b72d3",
+        "name": "set profile",
+        "notes": "## Format User Profile\nFormats LinkedIn profile data for PocketBase storage.\nMaps fields:\n- follower_count → followers\n- first_name → firstName\n- last_name → lastName\n- profile_picture_url → avatar"
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/people/records/{{ $('Check User Exists').item.json.items[0].id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ $('signin').item.json.token }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "messages",
+                "value": "={{ JSON.stringify( $json.messages ) }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          540,
+          380
+        ],
+        "id": "ca0927a7-fde9-48f8-b461-d1e8ab07e412",
+        "name": "update_user",
+        "notes": "## Update User Messages\nUpdates user's message history in PocketBase.\n\n⚠️ Configuration Required:\n1. Update URL to your PocketBase instance\n2. Verify PATCH endpoint matches your setup\n3. Ensure messages field exists in people collection"
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/people/records/{{ $('create user').item.json.id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('signin').item.json.token }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "messages",
+                "value": "=[\"{{ $json.id }}\"] "
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          860,
+          620
+        ],
+        "id": "039e05c1-ef55-4773-8aa8-e94c83d1c789",
+        "name": "update_user1",
+        "notes": "## Initialize User Messages\nSets initial message array for new user.\n\n⚠️ Configuration Required:\n1. Update URL to your PocketBase instance\n2. Verify PATCH endpoint matches your setup\n3. Ensure messages field exists in people collection"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "ec395eb7-1db8-4258-97ca-9b48b386a8cd",
+                "name": "messages",
+                "value": "={{ $('Check User Exists').item.json.items[0].messages.append($json.id) }}",
+                "type": "array"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          300,
+          380
+        ],
+        "id": "02c76f8b-6e98-4f60-808c-a0fba84af2a7",
+        "name": "Edit Fields1"
+      },
+      {
+        "parameters": {
+          "inputText": "={{ $('Webhook').item.json.body.message }}",
+          "categories": {
+            "categories": [
+              {
+                "category": "love-your-content",
+                "description": "Choose this category when the Text to Classify is regarding an initial outreach and consists mainly of complimenting work done on The Studio (aka n8n studio), The Studio Update, Flowgramming. Text may also refer to it as \"your videos\" or \"your content\".  Here is an example input text:\n thanks for your videos teaching us n8n .I'm new learner of n8n and happy to connect with you ,Max."
+              },
+              {
+                "category": "collab-proposal",
+                "description": "Choose this category when the Text to Classify includes an offer for collaboration. This could include exploring a potenital collaboration, partnership, interview on their show etc. Here is an example input text: \nn8n Collab with No-code PH Hi Max, I'm Crystal from No-code PH. Where can I send an email for a potential collab? We're doing a workflow automation talk (online only) on Feb 17th, hope we can work on something together."
+              }
+            ]
+          },
+          "options": {
+            "fallback": "other"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.textClassifier",
+        "typeVersion": 1,
+        "position": [
+          1100,
+          620
+        ],
+        "id": "2b1df232-4155-46f8-b14a-53e6ea6ba373",
+        "name": "Text Classifier",
+        "alwaysOutputData": false,
+        "notes": "## Message Classification\nClassifies messages using AI into categories:\n- love-your-content\n- collab-proposal\n- other\n\n⚠️ Configuration Required:\n1. Review and adjust category descriptions\n2. Add/modify categories as needed\n3. Configure fallback category"
+      },
+      {
+        "parameters": {
+          "model": "claude-3-haiku-20240307",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+        "typeVersion": 1.2,
+        "position": [
+          1100,
+          820
+        ],
+        "id": "204ae0fe-1fe6-42c7-9ba2-9cb79b711a12",
+        "name": "Anthropic Chat Model",
+        "credentials": {
+          "anthropicApi": {
+            "id": "VN0XNDKVfMKoscWz",
+            "name": "devrel-workspace (max@n8n)"
+          }
+        },
+        "notes": "## AI Message Classification\nUses Claude to classify incoming messages.\n\n⚠️ Configuration Required:\n1. Set up Anthropic API credentials\n2. Optionally adjust model version\n3. Configure classification categories in Text Classifier node"
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/inboxes/records/{{ $('Store New User Message').item.json.id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{ $('signin').item.json.token }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "category",
+                "value": "={{ $json.categoryToAdd }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1840,
+          540
+        ],
+        "id": "da766043-2390-4554-8190-abf7113424ac",
+        "name": "Append tag",
+        "notes": "## Update Message Category\nAdds classification category to message in PocketBase.\n\n⚠️ Configuration Required:\n1. Update URL to your PocketBase instance\n2. Verify PATCH endpoint matches your PocketBase setup"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "95498f49-d4dd-494b-95eb-40f2225542c6",
+                "name": "categoryToAdd",
+                "value": "love-your-content",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1560,
+          440
+        ],
+        "id": "50a751c8-548a-4c12-9eed-b78eabc22807",
+        "name": "love-your-content"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "e098fe22-7e12-43cb-9786-99c3665061b1",
+                "name": "categoryToAdd",
+                "value": "collab-proposal",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1560,
+          640
+        ],
+        "id": "8f24f276-4c80-42ba-a9ed-be17401b4b93",
+        "name": "collab proposal"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1560,
+          860
+        ],
+        "id": "d046f0b1-12f2-4489-9ab5-eab652c47a12",
+        "name": "No tag to add. Stop"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "689bf203-1a3e-4937-abf1-452a558978b7",
+                "name": "isFromMe",
+                "value": false,
+                "type": "boolean"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -940,
+          700
+        ],
+        "id": "aa6d60d6-85a7-4995-83d6-fec103b3dd60",
+        "name": "NOTFromMe"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "689bf203-1a3e-4937-abf1-452a558978b7",
+                "name": "isFromMe",
+                "value": true,
+                "type": "boolean"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -940,
+          460
+        ],
+        "id": "7390321d-2f56-4768-8802-df0b79bb7a4a",
+        "name": "FromMe"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "4fa61395-4afe-4f94-9bd9-3543e5d4738b",
+                "name": "isFromMe",
+                "value": "={{ $json.isFromMe }}",
+                "type": "boolean"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -760,
+          560
+        ],
+        "id": "7299659b-d319-4bf5-a2b6-bcdd0266e837",
+        "name": "isFromMe"
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "cd89bfa5-ea8b-4e5f-b0c9-3f4f12411396",
+                      "leftValue": "={{ $json.body.content }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "string",
+                        "operation": "notEmpty",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "SENTFROMAPP"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.body.attendees[0].attendee_profile_url }}",
+                      "rightValue": "={{ $json.body.sender.attendee_profile_url }}",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "NOTFomME"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "87eb6241-c28e-4ff2-812f-9b8e9bcec7ca",
+                      "leftValue": "={{ $json.body.attendees[0].attendee_profile_url }}",
+                      "rightValue": "={{ $json.body.sender.attendee_profile_url }}",
+                      "operator": {
+                        "type": "string",
+                        "operation": "notEquals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "FromME"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          -1360,
+          580
+        ],
+        "id": "4de1e9c8-3de2-4b9e-8c0e-859c4e3fa286",
+        "name": "Switch",
+        "notes": "## Message Direction Detection\nDetermines if message is:\n1. Sent from our app\n2. From the recipient (NOT from me)\n3. From me (my message)\n\nThis affects how we process and store the message."
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -1140,
+          220
+        ],
+        "id": "488b560b-ddcd-44ed-89bf-7f437fd82473",
+        "name": "No Operation, do nothing"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=****POCKETBASE_BASE_URL****/api/collections/users/auth-with-password",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "identity",
+                "value": "****POCKETBASE_SERVICE_USER_EMAIL****"
+              },
+              {
+                "name": "password",
+                "value": "****POCKETBASE_SERVICE_USER_PASSWORD****"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -600,
+          560
+        ],
+        "id": "40aac4a4-6e9e-493d-a9e4-b7927e3a86e0",
+        "name": "signin",
+        "notes": "## PocketBase Authentication\nSigns into PocketBase admin account.\n\n⚠️ Configuration Required:\n1. Set environment variables:\n   - POCKET_BASE_URL\n   - POCKET_BASE_EMAIL\n   - POCKET_BASE_PASSWORD"
+      },
+      {
+        "parameters": {
+          "content": "## 1. Message Entry and Authentication\n[Learn more about the Webhook node](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/)\n\nThe workflow starts with a webhook that receives LinkedIn messages. It first validates the account and determines if the message is from the user or someone else. This setup ensures we only process relevant LinkedIn messages and handle authentication properly.",
+          "height": 220,
+          "width": 490,
+          "color": 7
+        },
+        "id": "2c1acee0-9456-49e2-88b3-870a7ba2893b",
+        "name": "Sticky Note1",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -1840,
+          220
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## 2. User Management\n[Learn more about HTTP Request nodes](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/)\n\nThis section handles user data in PocketBase. It checks if the sender exists in the database:\n- If they exist, updates their message history\n- If they're new, creates a profile by fetching LinkedIn data\nThis ensures we maintain clean user records and message history.",
+          "height": 220,
+          "width": 490,
+          "color": 7
+        },
+        "id": "efc3f9e3-1b43-459f-92de-b5e9bf6bcf9b",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -840,
+          20
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## 3. Message Processing and Storage\n[Learn more about the Set node](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.set/)\n\nMessages are processed and stored with:\n- Message content\n- Timestamp\n- Chat ID\n- Sender information\n- isFromMe flag\nThis creates a complete message history for each conversation.",
+          "height": 260,
+          "width": 550,
+          "color": 7
+        },
+        "id": "cd4a64d2-865c-4d18-ae8a-0ed4b5aed1de",
+        "name": "Sticky Note2",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          0,
+          0
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## 4. AI Message Classification\n[Learn more about LangChain nodes](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/)\n\nMessages are automatically categorized using AI into:\n- love-your-content\n- collab-proposal\n- other\nThis helps in organizing and prioritizing responses.",
+          "height": 220,
+          "width": 530,
+          "color": 7
+        },
+        "id": "c215006a-04ac-4a1b-a9d3-1580c70b03b3",
+        "name": "Sticky Note3",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          780,
+          100
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## 5. Tag Management\nThe workflow concludes by:\n- Adding appropriate tags based on AI classification\n- Updating the message record with the category\n- Preparing the data for frontend display\nThis enables better message organization and response handling. ",
+          "height": 200,
+          "width": 530,
+          "color": 7
+        },
+        "id": "8866b53c-7f97-4896-ab24-9ef5afe42ae1",
+        "name": "Sticky Note4",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1480,
+          140
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "\nreplace all PocketBase URLs:\nhttps://your-pocketbase-instance\nwith your PocketBase instance URL\n\nRequired collections:\n- people\n- inboxes\n- users",
+          "height": 220,
+          "width": 520
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          460,
+          800
+        ],
+        "typeVersion": 1,
+        "id": "1863ed0e-7266-47be-8b75-41d0c01eaafd",
+        "name": "PocketBase Collections"
+      },
+      {
+        "parameters": {
+          "content": "\nAnthropic Configuration:\n1. Set up API key in credentials\n2. Current model: claude-3-haiku-20240307\n3. Adjust model based on needs\n\nClassification categories:\n- love-your-content\n- collab-proposal\n- other",
+          "height": 240,
+          "width": 400
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1000,
+          360
+        ],
+        "typeVersion": 1,
+        "id": "a9c4f6de-54ce-4950-b190-b6828279d091",
+        "name": "AI Configuration"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "9daace63-48e6-4c44-894a-92feabd4868c",
+                "leftValue": "={{ $json.body.account_id }}",
+                "rightValue": "=****UNIPILE_ACCOUNT_ID****",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -1600,
+          580
+        ],
+        "id": "7797926c-b37b-4d11-8868-049a1984a957",
+        "name": "If",
+        "notes": "## Account Validation\nVerifies the message is from the correct LinkedIn account.\n\n⚠️ Configuration Required:\n1. Update rightValue to your Unipile LinkedIn account_id"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -1500,
+          760
+        ],
+        "id": "f2341405-4f84-40d8-91f5-9e6f369aee52",
+        "name": "No Operation, do nothing1"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "create user": {
+        "main": [
+          [
+            {
+              "node": "Store New User Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get user": {
+        "main": [
+          [
+            {
+              "node": "Check User Exists",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check User Exists": {
+        "main": [
+          [
+            {
+              "node": "Store Existing User Message",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "get profile by id",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get profile by id": {
+        "main": [
+          [
+            {
+              "node": "set profile",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Existing User Message": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store New User Message": {
+        "main": [
+          [
+            {
+              "node": "update_user1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "set profile": {
+        "main": [
+          [
+            {
+              "node": "create user",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "update_user1": {
+        "main": [
+          [
+            {
+              "node": "Text Classifier",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields1": {
+        "main": [
+          [
+            {
+              "node": "update_user",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Text Classifier": {
+        "main": [
+          [
+            {
+              "node": "love-your-content",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "collab proposal",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No tag to add. Stop",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Anthropic Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Text Classifier",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "love-your-content": {
+        "main": [
+          [
+            {
+              "node": "Append tag",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "collab proposal": {
+        "main": [
+          [
+            {
+              "node": "Append tag",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "NOTFromMe": {
+        "main": [
+          [
+            {
+              "node": "isFromMe",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FromMe": {
+        "main": [
+          [
+            {
+              "node": "isFromMe",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "isFromMe": {
+        "main": [
+          [
+            {
+              "node": "signin",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch": {
+        "main": [
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "NOTFromMe",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "FromMe",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "signin": {
+        "main": [
+          [
+            {
+              "node": "get user",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If": {
+        "main": [
+          [
+            {
+              "node": "Switch",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Operation, do nothing1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {
+      "Webhook": [
+        {
+          "headers": {
+            "host": "devrel.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+            "content-length": "1121",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "51.159.110.129",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "FR",
+            "cf-ray": "917a28b1a6d0d30d-CDG",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"Chromium\";v=\"118\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Linux\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "51.159.110.129, 172.71.232.86",
+            "x-forwarded-host": "devrel.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-8-86454fd949-ms967",
+            "x-is-trusted": "yes",
+            "x-real-ip": "51.159.110.129"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "event": "message_received",
+            "account_id": "gXVRsr0MRuqmJcLb8qcbYg",
+            "account_type": "LINKEDIN",
+            "account_info": {
+              "type": "LINKEDIN",
+              "feature": "classic",
+              "user_id": "ACoAACT0WdIBiuplJ8kgTiB9PJsBe-t9i3gHeLs"
+            },
+            "webhook_name": "linkedout-devrel-instance_message-handler",
+            "chat_id": "b16yP0MtWcCeJ7FnaSToQg",
+            "attendees": [
+              {
+                "attendee_id": "KEvBN83nVv2UZUpGP_Addg",
+                "attendee_provider_id": "ACoAABVX2ncBH8k01-JK_BbJv7vl4_CF49nyT6Q",
+                "attendee_name": "Oumnya Benhassou",
+                "attendee_profile_url": "https://www.linkedin.com/in/ACoAABVX2ncBH8k01-JK_BbJv7vl4_CF49nyT6Q"
+              }
+            ],
+            "sender": {
+              "attendee_id": "KEvBN83nVv2UZUpGP_Addg",
+              "attendee_provider_id": "ACoAABVX2ncBH8k01-JK_BbJv7vl4_CF49nyT6Q",
+              "attendee_name": "Oumnya Benhassou",
+              "attendee_profile_url": "https://www.linkedin.com/in/ACoAABVX2ncBH8k01-JK_BbJv7vl4_CF49nyT6Q"
+            },
+            "subject": null,
+            "message": "ooh yeah i got it :D",
+            "message_id": "kcKvbQKmXp-t55whWd59CQ",
+            "timestamp": "2025-02-25T19:38:59.979Z",
+            "attachments": [],
+            "provider_chat_id": "2-YjQ0YzcyYjgtMmEzNi00MmM0LWFiZDYtNTMxN2E5YzExMTYwXzAxMw==",
+            "provider_message_id": "2-MTc0MDUxMjMzOTc3NGIxMTU4Ni0xMDAmYjQ0YzcyYjgtMmEzNi00MmM0LWFiZDYtNTMxN2E5YzExMTYwXzAxMw=="
+          },
+          "webhookUrl": "https://devrel.app.n8n.cloud/webhook/messages",
+          "executionMode": "production"
+        }
+      ],
+      "get user": [
+        {
+          "items": [],
+          "page": 1,
+          "perPage": 30,
+          "totalItems": 0,
+          "totalPages": 0
+        }
+      ],
+      "signin": [
+        {
+          "record": {
+            "avatar": "",
+            "collectionId": "_pb_users_auth_",
+            "collectionName": "users",
+            "created": "2025-02-25 19:51:29.624Z",
+            "email": "max+utility@n8n.io",
+            "emailVisibility": false,
+            "id": "ph12y2j2kiv6s80",
+            "name": "",
+            "updated": "2025-02-25 19:51:29.624Z",
+            "verified": false
+          },
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0aW9uSWQiOiJfcGJfdXNlcnNfYXV0aF8iLCJleHAiOjE3NDExMjA2MzgsImlkIjoicGgxMnkyajJraXY2czgwIiwicmVmcmVzaGFibGUiOnRydWUsInR5cGUiOiJhdXRoIn0.Z861f6zjnVWX14UNk1a0uNcRXMPIx6suwPucbzabwJA"
+        }
+      ]
+    },
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "205b3bc06c96f2dc835b4f00e1cbf9a937a74eeb3b47c99d0c30b0586dbf85aa"
+    }
+  }
