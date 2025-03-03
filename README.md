@@ -51,6 +51,7 @@ LinkedOut was built to help manage hectic LinkedIn inboxes on mobile and desktop
 
 
 ## Installation
+Watch a [set up video on YouTube](https://www.youtube.com/watch?v=KTLIsrOW-t0).
 ### Via CloudStation Template
 1. Set up the one-click LinkedOut + PocketBase template on CloudStation: [CloudStation LinkedOut Template](https://app.cloud-station.io/template-store/linkedout). You'll need an n8n instance ready by this step.
 2. Open LinkedOut front end from CloudStation dashboard and sign in with PocketBase superuser credentials (see them in PocketBase deployment env variables in CloudStation dashboard)
