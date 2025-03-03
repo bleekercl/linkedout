@@ -16,7 +16,6 @@ LinkedOut was built to help manage hectic LinkedIn inboxes on mobile and desktop
 - Open source: Self-host it, fork it.
 
 ## Known Outscope
-- Logic breaks if you send the first message (no sendee data set in DB)
 - Emoji reactions will not show
 - Group threads do not show (only Classic LinkedIN inbox, no Sales navigator either). Should be easy to tweak.
 - Draft reply only takes previous message (and name) as context. 
