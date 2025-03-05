@@ -5,7 +5,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         NEXT_PUBLIC_POCKETBASE_URL: http://localhost:8090
-        NEXT_PUBLIC_N8N_WEBHOOK_URL: http://localhost:5678
+        NEXT_PUBLIC_N8N_WEBHOOK_URL: http://n8n:5678
     ports:
       - "3000:3000"
     depends_on:

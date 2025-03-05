@@ -51,9 +51,52 @@ LinkedOut was built to help manage hectic LinkedIn inboxes on mobile and desktop
 
 ## Installation
 Watch a [set up video on YouTube](https://www.youtube.com/watch?v=KTLIsrOW-t0).
+
+### Via Docker 
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/maxt-n8n/linkedout.git
+   cd linkedout
+   ```
+
+2. **Configure environment variables (optional)**
+   - Create a `.env` file in the root directory or modify the values directly in `docker-compose.yml`
+   - Set the following variables:
+     ```
+     PB_ADMIN_EMAIL=admin@example.com
+     PB_ADMIN_PASSWORD=your-secure-password
+     N8N_WEBHOOK_URL=http://n8n:5678
+     POCKETBASE_URL=http://localhost:8090
+     ```
+
+3. **Build and start the containers**
+   ```bash
+   docker compose up --build
+   ```
+
+4. **Access the applications**
+   - Frontend: http://localhost:3000
+   - PocketBase: http://localhost:8090
+   - n8n: http://localhost:5678
+
+5. **Complete the setup wizard**
+   - Navigate to http://localhost:3000/setup
+   - Follow the on-screen instructions to configure n8n workflows and PocketBase
+
+### Docker Networking Notes
+The Docker Compose setup uses a special configuration for networking:
+- The frontend container uses `http://n8n:5678` to communicate with n8n
+- The browser uses `http://localhost:8090` to access PocketBase
+- This hybrid approach allows both browser and server-side code to work without modifications
+
+If you encounter networking issues:
+- Make sure all containers are running (`docker compose ps`)
+- Check container logs (`docker compose logs frontend`)
+- You may need to rebuild without cache (`docker compose build --no-cache`)
+
 ### Via CloudStation Template
 1. Set up the one-click LinkedOut + PocketBase template on CloudStation: [CloudStation LinkedOut Template](https://app.cloud-station.io/template-store/linkedout). You'll need an n8n instance ready by this step.
-2. Open LinkedOut front end from CloudStation dashboard and sign in with PocketBase superuser credentials (see them in PocketBase deployment env variables in CloudStation dashboard)
+2. Follow the setup wizard to connect your n8n instance and Unipile account.
 3. Complete the setup wizard (go to /setup if you get redirected to /inbox)
 4. Open your n8n workflows and replace any AI model steps with your own (not yet part of setup flow). 
 
@@ -100,6 +143,9 @@ Note: Do not include trailing slashes in URL environment variables.
 |----------|-------------|----------|
 | `NEXT_PUBLIC_N8N_WEBHOOK_URL` | N8N URL (without /webhook) | Yes |
 | `NEXT_PUBLIC_POCKETBASE_URL` | PocketBase URL | Yes |
+| `PB_ADMIN_EMAIL` | PocketBase admin email | For Docker setup |
+| `PB_ADMIN_PASSWORD` | PocketBase admin password | For Docker setup |
+
 Note: do not include '/' trailing slash in URL env variables. It will break things (WIP to filter that out).
 
 ## Contributing
