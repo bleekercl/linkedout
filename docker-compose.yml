@@ -1,15 +1,13 @@
-version: '3.8'
-
 services:
   frontend:
-    build: 
-      context: ./frontend
-      dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_POCKETBASE_URL: http://pocketbase:8090
+        NEXT_PUBLIC_N8N_WEBHOOK_URL: http://n8n:5678
     ports:
-      - "3001:3000"
-    environment:
-      - NEXT_PUBLIC_POCKETBASE_URL=http://pocketbase:8090
-      - NEXT_PUBLIC_N8N_WEBHOOK_URL=http://n8n:5678
+      - "3000:3000"
     depends_on:
       - pocketbase
       - n8n
@@ -22,6 +20,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8090:8090"
+    environment:
+      - PB_ADMIN_EMAIL=${PB_ADMIN_EMAIL:-admin@example.com}
+      - PB_ADMIN_PASSWORD=${PB_ADMIN_PASSWORD:-changeme123}
     volumes:
       - ./backend/pb_data:/pb_data
     restart: unless-stopped
@@ -41,7 +42,7 @@ services:
       - DB_TYPE=sqlite
       - DB_SQLITE_PATH=/home/node/.n8n/database.sqlite
     volumes:
-      - ./backend/n8n_data:/home/node/.n8n
+      - n8n_data:/home/node/.n8n
     restart: unless-stopped
 
 volumes:

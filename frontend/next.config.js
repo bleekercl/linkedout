@@ -12,6 +12,11 @@ const nextConfig = {
       getDomain(process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL)
     ].filter(Boolean)
   },
+  // Add these lines
+  output: 'standalone',
+  experimental: {
+    outputFileTracingRoot: undefined,
+  },
 };
 
 module.exports = nextConfig;
