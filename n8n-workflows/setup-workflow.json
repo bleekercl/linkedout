@@ -53,7 +53,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Create service account').item.json.body.pocketbaseUrl }}/api/collections/users/records",
+        "url": "=****POCKETBASE_BASE_URL****/api/collections/users/records",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -81,7 +81,7 @@
     {
       "parameters": {
         "method": "PUT",
-        "url": "={{ $json.body.pocketbaseUrl }}/api/collections/import",
+        "url": "=****POCKETBASE_BASE_URL****/api/collections/import",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

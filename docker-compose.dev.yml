@@ -1,19 +1,4 @@
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-      args:
-        NEXT_PUBLIC_POCKETBASE_URL: http://localhost:8090
-        NEXT_PUBLIC_N8N_WEBHOOK_URL: http://n8n:5678
-    ports:
-      - "3000:3000"
-    depends_on:
-      - pocketbase
-      - n8n
-    stop_grace_period: 1m
-    restart: unless-stopped
-
   pocketbase:
     build: 
       context: ./backend
@@ -41,12 +26,11 @@ services:
       - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
       - DB_TYPE=sqlite
       - DB_SQLITE_PATH=/home/node/.n8n/database.sqlite
-      - N8N_SKIP_WEBHOOK_DEREGISTRATION_SHUTDOWN=true
-
+    volumes:
+      - n8n_data:/home/node/.n8n
     restart: unless-stopped
 
 volumes:
-  pb_data:
   n8n_data:
 
 networks:
