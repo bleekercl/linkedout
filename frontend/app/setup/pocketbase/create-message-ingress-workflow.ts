@@ -31,10 +31,16 @@ export async function createMessageIngressWorkflow(
     
     // Get account ID from parameter or localStorage
     const accountId = unipileAccountId || localStorage.getItem('unipileAccountId') || "";
-    
+      // Get PocketBase URL and modify for Docker if needed
+      let pocketbaseUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || "";
+      if (pocketbaseUrl.includes("localhost") || pocketbaseUrl.includes("127.0.0.1")) {
+        pocketbaseUrl = pocketbaseUrl.replace("localhost", "pocketbase").replace("127.0.0.1", "pocketbase");
+        console.log("Modified PocketBase URL for Docker network:", pocketbaseUrl);
+      }
+      
     // Define replacements map with the account ID
     const replacements = {
-      "****POCKETBASE_BASE_URL****": process.env.NEXT_PUBLIC_POCKETBASE_URL || "",
+      "****POCKETBASE_BASE_URL****": pocketbaseUrl,
       "****UNIPILE_CREDENTIAL_ID****": unipileCredentialId,
       "****POCKETBASE_SERVICE_USER_EMAIL****": "linkedout-service-user@n8n.io",
       "****POCKETBASE_SERVICE_USER_PASSWORD****": pocketbaseServicePassword,
