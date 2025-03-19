@@ -59,27 +59,18 @@ Watch a [set up video on YouTube](https://www.youtube.com/watch?v=KTLIsrOW-t0).
    cd linkedout
    ```
 
-2. **Configure environment variables (optional)**
-   - Create a `.env` file in the root directory or modify the values directly in `docker-compose.yml`
-   - Set the following variables:
-     ```
-     PB_ADMIN_EMAIL=admin@example.com
-     PB_ADMIN_PASSWORD=your-secure-password
-     N8N_WEBHOOK_URL=http://n8n:5678
-     POCKETBASE_URL=http://localhost:8090
-     ```
-
-3. **Build and start the containers**
+2. **Copy the example environment file and start the containers**
    ```bash
+   cp .env.example .env
    docker compose up --build
    ```
 
-4. **Access the applications**
+3. **Access the applications**
    - Frontend: http://localhost:3000
    - PocketBase: http://localhost:8090
    - n8n: http://localhost:5678
 
-5. **Complete the setup wizard**
+4. **Complete the setup wizard**
    - Navigate to http://localhost:3000/setup
    - Follow the on-screen instructions to configure n8n workflows and PocketBase
 
