@@ -68,7 +68,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL}/webhook/${endpoint}`, {
+    let n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "";
+    if (n8nUrl.includes("localhost") || n8nUrl.includes("127.0.0.1")) {
+      n8nUrl = n8nUrl.replace("localhost", "n8n").replace("127.0.0.1", "n8n");
+    }
+
+    const response = await fetch(`${n8nUrl}/webhook/${endpoint}`, {
       method: 'POST',
       headers: {
         'Authorization': token,
@@ -118,7 +123,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL}/webhook/${endpoint}`, {
+    let n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "";
+    if (n8nUrl.includes("localhost") || n8nUrl.includes("127.0.0.1")) {
+      n8nUrl = n8nUrl.replace("localhost", "n8n").replace("127.0.0.1", "n8n");
+    }
+
+    const response = await fetch(`${n8nUrl}/webhook/${endpoint}`, {
       headers: {
         'Authorization': token,
         'Content-Type': 'application/json',

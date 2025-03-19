@@ -1,4 +1,3 @@
-
 services:
   frontend:
     build:
@@ -6,7 +5,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         NEXT_PUBLIC_POCKETBASE_URL: http://localhost:8090
-        NEXT_PUBLIC_N8N_WEBHOOK_URL: http://n8n:5678
+        NEXT_PUBLIC_N8N_WEBHOOK_URL: http://localhost:5678
     ports:
       - "3000:3000"
     depends_on:
@@ -14,6 +13,12 @@ services:
       - n8n
     stop_grace_period: 1m
     restart: unless-stopped
+    networks:
+      - linkedout-network
+    extra_hosts:
+      - "localhost:127.0.0.1"
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: "1"
 
   pocketbase:
     build: 
@@ -27,6 +32,8 @@ services:
     volumes:
       - ./backend/pb_data:/pb_data
     restart: unless-stopped
+    networks:
+      - linkedout-network
 
   n8n:
     image: n8nio/n8n
@@ -36,16 +43,23 @@ services:
       - N8N_HOST=${N8N_HOST:-localhost}
       - N8N_PORT=5678
       - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - N8N_PATH=/
       - N8N_USER_MANAGEMENT_DISABLED=true
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_PUBLIC_API_DISABLED=false
       - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-false}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
       - DB_TYPE=sqlite
       - DB_SQLITE_PATH=/home/node/.n8n/database.sqlite
     volumes:
       - n8n_data:/home/node/.n8n
     restart: unless-stopped
+    networks:
+      - linkedout-network
 
+  # Optional: Keep ngrok if you need it
   ngrok:
     image: ngrok/ngrok:latest
     restart: unless-stopped
@@ -56,11 +70,13 @@ services:
       - "4040:4040"  # ngrok web interface
     depends_on:
       - n8n
+    networks:
+      - linkedout-network
 
 volumes:
   pb_data:
   n8n_data:
 
 networks:
-  default:
+  linkedout-network:
     name: linkedout-network

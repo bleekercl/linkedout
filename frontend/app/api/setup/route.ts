@@ -35,8 +35,15 @@ export async function POST(request: Request) {
         requestHeaders['Authorization'] = `Bearer ${pocketbaseToken}`;
       }
       
+      // Modify the n8n URL for Docker networking
+      let n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "";
+      if (n8nUrl.includes("localhost") || n8nUrl.includes("127.0.0.1")) {
+        n8nUrl = n8nUrl.replace("localhost", "n8n").replace("127.0.0.1", "n8n");
+        console.log("Modified n8n URL for Docker network:", n8nUrl);
+      }
+      
       // Forward to n8n API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL}/${endpoint}`, {
+      const response = await fetch(`${n8nUrl}/${endpoint}`, {
         method: 'POST',
         headers: requestHeaders,
         body: JSON.stringify(body),
