@@ -47,6 +47,7 @@ LinkedOut was built to help manage hectic LinkedIn inboxes on mobile and desktop
 - PocketBase instance
 - n8n instance for automation workflows. Get 50% off [n8n cloud](https://app.n8n.cloud/register?utm_campaign=linkedout) for 12 months with MAX50. Enter coupon after free trial when choosing a plan.
 - A [Unipile account for](https://www.unipile.com/linkedin-api-a-comprehensive-guide-to-integration/?utm_source=youtube&utm_campaign=MAXFROMN8N) LinkedIn API access. Get 50% off Unipile for 3 months with MAXFROMN8N code (message support with code after sign up)
+- **Ngrok account** for local development (required to receive webhook notifications from Unipile). [Get your authtoken here](https://dashboard.ngrok.com/get-started/your-authtoken).
 
 
 ## Installation
@@ -62,27 +63,44 @@ Watch a [set up video on YouTube](https://www.youtube.com/watch?v=KTLIsrOW-t0).
 2. **Copy the example environment file and start the containers**
    ```bash
    cp .env.example .env
+   ```
+
+3. **Update the .env file with your ngrok authtoken**
+   ```
+   NGROK_AUTHTOKEN=your_token_here
+   ```
+   This is required for local development to receive webhook notifications from Unipile. Get your authtoken from the [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken).
+
+4. **Start the containers**
+   ```bash
    docker compose up --build
    ```
 
-3. **Access the applications**
+5. **Access the applications**
    - Frontend: http://localhost:3000
    - PocketBase: http://localhost:8090
    - n8n: http://localhost:5678
+   - ngrok dashboard: http://localhost:4040
 
-4. **Complete the setup wizard**
+6. **Complete the setup wizard**
    - Navigate to http://localhost:3000/setup
    - Follow the on-screen instructions to configure n8n workflows and PocketBase
+   - When configuring Unipile, use the ngrok URL (visible in the ngrok dashboard) as your webhook URL
 
 ### Docker Networking Notes
-The Docker Compose setup uses a special configuration for networking:
-- The frontend container uses `http://n8n:5678` to communicate with n8n
-- The browser uses `http://localhost:8090` to access PocketBase
-- This hybrid approach allows both browser and server-side code to work without modifications
+The Docker Compose setup uses a hybrid networking approach:
+
+- For browser requests: The browser accesses services via `localhost` ports (3000 for frontend, 8090 for PocketBase, 5678 for n8n)
+- For server-side code: The frontend container communicates with other services using Docker's internal DNS:
+  - Server-side code automatically converts `localhost` URLs to service names (e.g., `localhost:5678` → `n8n:5678`)
+  - This allows both browser and server-side code to use the same environment variables
+
+This approach eliminates the need for different URLs in different environments and simplifies development.
 
 If you encounter networking issues:
 - Make sure all containers are running (`docker compose ps`)
 - Check container logs (`docker compose logs frontend`)
+- Verify that the frontend container has the correct `extra_hosts` configuration
 - You may need to rebuild without cache (`docker compose build --no-cache`)
 
 ### Via CloudStation Template
@@ -136,6 +154,7 @@ Note: Do not include trailing slashes in URL environment variables.
 | `NEXT_PUBLIC_POCKETBASE_URL` | PocketBase URL | Yes |
 | `PB_ADMIN_EMAIL` | PocketBase admin email | For Docker setup |
 | `PB_ADMIN_PASSWORD` | PocketBase admin password | For Docker setup |
+| `NGROK_AUTHTOKEN` | Your ngrok authtoken | For local development |
 
 Note: do not include '/' trailing slash in URL env variables. It will break things (WIP to filter that out).
 
