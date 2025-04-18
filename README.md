@@ -1,7 +1,4 @@
 # LinkedOut - AI-Powered LinkedIn Inbox 
-<div align="center">
-  <img src="assets/linkedout-hero-optimizied.png" alt="LinkedOut Preview" width="100%" />
-</div>
 
 LinkedOut was built to help manage hectic LinkedIn inboxes on mobile and desktop. It includes AI draft replies and static text snippets library, making it a nimble assistant without being ChatGPT. Front-end built with Next.js, TypeScript, and Tailwind CSS. Backend runs on n8n and PocketBase. Clone it, tweak it, make it yours.
 
@@ -24,9 +21,6 @@ LinkedOut was built to help manage hectic LinkedIn inboxes on mobile and desktop
 - Setup flow does not configure AI model nodes in n8n workflow (WIP)
 
 ## Tech Stack
-<div align="center">
-  <img src="assets/linkedout-arch-optimized.png" alt="LinkedOut Preview" width="100%" />
-</div>
 
 ### Frontend
 - **Framework:** Next.js  (App Router)
